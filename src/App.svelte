@@ -4,6 +4,7 @@
   import babel from "prettier/parser-babel";
   import prettier from "prettier";
   let SELECTS = {};
+  let INPUTS = {};
 
   function format(code) {
     return prettier.format(code, {
@@ -14,24 +15,49 @@
 
   import { onMount } from "svelte";
   onMount(async () => {
-    for (let i in BLOCKLIST) {
-      BLOCKLIST[i].code = format(BLOCKLIST[i].code);
-    }
-    setInterval(() => {
-      code = getCode();
-    }, 50);
+    setInterval(async () => {
+      code = await getCode();
+    }, 1000);
   });
   const BLOCKLIST = [
     {
       type: "translate",
-      code: `const translate = require("google-translate-api"); let translated = await translate("Bonjour", {to: "en"});\nreturn {translated: translated}`,
+      inputs: {
+        text: { label: "Translate this text: ", type: "textarea" },
+        to: { label: "Translate to", type: "select", options: ["en", "es"] },
+      },
+      code: ({ text, to }) => {
+        return `const translate = require("google-translate-api"); let translated = await translate(${safe(
+          text
+        )}, {to: ${safe(to)}});\nreturn {translated: translated}`;
+      },
       requires: ["google-translate-api"],
     },
-    { type: "log", code: `console.log("Hello world");` },
+    {
+      type: "log",
+      inputs: {
+        log: { label: "Log this text:", type: "textarea" },
+      },
+      code: ({ log }) => {
+        return `console.log(${safe(log)})`;
+      },
+    },
     { type: "print context", code: `console.log("Context is: ", CONTEXT);` },
   ];
-
-  function getCode() {
+  function safe(interpolatedString) {
+    return (
+      "`" +
+      interpolatedString
+        .replaceAll("\n", "\\n")
+        .replaceAll("`", "\\`")
+        .replace(
+          /{{(.*?)}}/g,
+          (_, one) => `\$\{CONTEXT[${JSON.stringify(one)}]\}`
+        ) +
+      "`"
+    );
+  }
+  async function getCode() {
     if (!blocks.length) {
       return `//No blocks added`;
     }
@@ -48,14 +74,15 @@
     for (let i in blocks) {
       let block = blocks[i];
       let fn = ``;
-      if (block.code.includes("await")) {
+      let code = "return 'cool'"; /* await block.code(INPUTS[block.id] || {}) */
+      if (code.includes("await")) {
         fn = `await (async () => {
-				 ${block.code}
+				 ${code}
 			 })().then(setContext)`;
-      } else if (!block.code.includes("return")) {
-        fn = block.code;
+      } else if (!code.includes("return")) {
+        fn = code;
       } else {
-        fn = `setContext((() => {\n${block.code}\n})())`;
+        fn = `setContext((() => {\n${code}\n})())`;
       }
       output += `
 			// Step ${parseInt(i) + 1} of ${blocks.length}: ${block.type}
@@ -102,11 +129,10 @@
         </option>
       {/each}
     </select>
-    <textarea
-      bind:value={blocks[blocks.findIndex((i) => i.id === block.id)].code}
-    >
-      {block.code}
-    </textarea>
+    {#each Object.entries(block.inputs || {}) as [id, input]}
+      {input.label}
+      <input type="text" bind:value={INPUTS[block.id + "|" + id]} />
+    {/each}
   {/each}
   <button id="addBlock" on:click={addBlock}>Add block</button>
   <textarea readonly>{code}</textarea>
