@@ -1,8 +1,12 @@
-<script context="module">
+<script>
+  import { createEventDispatcher } from "svelte";
+  const dispatch = createEventDispatcher();
+  export let code = "";
   import { CodeJar } from "codejar";
   import { withLineNumbers } from "codejar/linenumbers";
   import Prism from "prismjs";
   export let id = Math.random().toString(36).slice(2);
+
   id = `code_editor_${id}`;
 
   export function codedit(
@@ -24,8 +28,10 @@
     editor.onUpdate((code) => fire(node, "change", code));
 
     function update({ code, autofocus = false, loc = false, ...options }) {
-      editor.updateOptions(options);
-      editor.updateCode(code);
+      if (code !== editor.toString()) {
+        editor.updateOptions(options);
+        editor.updateCode(code);
+      }
     }
 
     update({ code, ...options });
@@ -41,13 +47,9 @@
   }
 
   function fire(el, name, detail) {
-    const e = new CustomEvent(name, { detail });
-    el.dispatchEvent(e);
+    console.log(detail);
+    dispatch("codeUpdate", { detail, target: el });
   }
-</script>
-
-<script>
-  export let code = "";
 </script>
 
 <div {id} use:codedit={{ code, $$restProps }} />

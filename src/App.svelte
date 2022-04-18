@@ -17,7 +17,7 @@
   onMount(async () => {
     setInterval(async () => {
       code = await getCode();
-    }, 1000);
+    }, 10);
   });
   const BLOCKLIST = [
     {
@@ -138,7 +138,6 @@
       );
     }
     function getDefault(type) {
-      console.log({ type });
       if (type) {
         switch (type) {
           case "string":
@@ -160,7 +159,6 @@
       select: block.type,
       inputValues,
     };
-    console.log(out);
     return out;
   }
   function switchType(id, type) {
@@ -200,7 +198,13 @@
           use:autosize
         />
       {:else if input.type === "code"}
-        <CodeEditor id={`${block.id}_input`} code={block.inputValues[id]} />
+        <CodeEditor
+          id={`${block.id}_input`}
+          code={block.inputValues[id]}
+          on:codeUpdate={({ detail: code }) => (
+            (block.inputValues[id] = code.detail), code.detail
+          )}
+        />
       {:else if input.type === "select"}
         <select id={`${block.id}_input`} bind:value={block.inputValues[id]}>
           {#each input.choices || input.options as opt}
