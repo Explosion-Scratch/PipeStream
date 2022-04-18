@@ -4,9 +4,11 @@ specifiers:
   '@babel/parser': ^7.17.9
   '@rollup/plugin-commonjs': ^17.0.0
   '@rollup/plugin-node-resolve': ^11.0.0
+  codejar: ^3.6.0
   less: ^4.1.2
   prettier: ^2.6.2
   prettier-format: ^3.1.0
+  prismjs: ^1.28.0
   rollup: ^2.3.4
   rollup-plugin-css-only: ^3.1.0
   rollup-plugin-livereload: ^2.0.0
@@ -24,8 +26,10 @@ devDependencies:
   '@babel/parser': 7.17.9
   '@rollup/plugin-commonjs': 17.1.0_rollup@2.70.2
   '@rollup/plugin-node-resolve': 11.2.1_rollup@2.70.2
+  codejar: 3.6.0
   less: 4.1.2
   prettier: 2.6.2
+  prismjs: 1.28.0
   rollup: 2.70.2
   rollup-plugin-css-only: 3.1.0_rollup@2.70.2
   rollup-plugin-livereload: 2.0.5
@@ -211,6 +215,10 @@ packages:
       readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
+
+  /codejar/3.6.0:
+    resolution: {integrity: sha512-30iPkdz4Y3d2qVMpMKsvEREtfUBH6JHvW2aWeoCBR67DUoZqSQLIvcAlLWZuTG7i7DonJkbCqkBnJPPhbj+J6w==}
     dev: true
 
   /color-convert/1.9.3:
@@ -605,6 +613,11 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+    dev: true
+
+  /prismjs/1.28.0:
+    resolution: {integrity: sha512-8aaXdYvl1F7iC7Xm1spqSaY/OJBpYW3v+KJ+F17iYxvdc8sfjW194COK5wVhMZX45tGteiBQgdvD/nhxcRwylw==}
+    engines: {node: '>=6'}
     dev: true
 
   /prr/1.0.1:

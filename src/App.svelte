@@ -1,10 +1,10 @@
 <script>
+  import CodeEditor from "./components/CodeEditor.svelte";
+  import autosize from "./helpers/autosize";
   let blocks = [];
   let code = "";
   import babel from "prettier/parser-babel";
   import prettier from "prettier";
-  let SELECTS = {};
-  let INPUTS = {};
 
   function format(code) {
     return prettier.format(code, {
@@ -21,10 +21,36 @@
   });
   const BLOCKLIST = [
     {
+      type: "code",
+      inputs: {
+        code: {
+          label: "JavaScript code",
+          type: "code",
+          is: "string",
+          default:
+            "//Use the 'CONTEXT' variable to get the output of various steps. Write to it to save something\n//Also, it's optionally async, if you put \"await anywhere in your code\"",
+        },
+      },
+      code: ({ code }) => code,
+    },
+    {
       type: "translate",
       inputs: {
-        text: { label: "Translate this text: ", type: "textarea" },
-        to: { label: "Translate to", type: "select", options: ["en", "es"] },
+        text: {
+          label: "Translate this text: ",
+          type: "textarea",
+          default: "Bonjour",
+          type: "input",
+          is: "string",
+        },
+        to: {
+          label: "Translate to",
+          type: "select",
+          options: ["en", "es"],
+          default: "en",
+          is: "string",
+          type: "select",
+        },
       },
       code: ({ text, to }) => {
         return `const translate = require("google-translate-api"); let translated = await translate(${safe(
@@ -36,13 +62,16 @@
     {
       type: "log",
       inputs: {
-        log: { label: "Log this text:", type: "textarea" },
+        log: { label: "Log this text:", type: "textarea", is: "string" },
       },
       code: ({ log }) => {
         return `console.log(${safe(log)})`;
       },
     },
-    { type: "print context", code: `console.log("Context is: ", CONTEXT);` },
+    {
+      type: "print context",
+      code: () => `console.log("Context is: ", CONTEXT);`,
+    },
   ];
   function safe(interpolatedString) {
     return (
@@ -50,6 +79,7 @@
       interpolatedString
         .replaceAll("\n", "\\n")
         .replaceAll("`", "\\`")
+        .replaceAll("$", "\\$")
         .replace(
           /{{(.*?)}}/g,
           (_, one) => `\$\{CONTEXT[${JSON.stringify(one)}]\}`
@@ -61,7 +91,7 @@
     if (!blocks.length) {
       return `//No blocks added`;
     }
-    let output = ``;
+    let output = `// This variable stores the context of the code as it runs, the setContext function changes it after every step.\nlet CONTEXT = {}\n`;
     if (blocks.find((i) => i.requires?.length)) {
       output += `
 		// To install the needed npm modules for this project run:
@@ -74,7 +104,7 @@
     for (let i in blocks) {
       let block = blocks[i];
       let fn = ``;
-      let code = "return 'cool'"; /* await block.code(INPUTS[block.id] || {}) */
+      let code = await block.code(block.inputValues || {});
       if (code.includes("await")) {
         fn = `await (async () => {
 				 ${code}
@@ -96,17 +126,49 @@
     return format(output);
   }
   function addBlock() {
-    blocks = [
-      ...blocks,
-      { id: Math.random().toString(36).slice(2), ...BLOCKLIST[0] },
-    ];
+    blocks = [...blocks, _block(BLOCKLIST[0])];
+  }
+  function _block(block) {
+    let inputValues = {};
+    if (block.inputs && Object.values(block.inputs).length) {
+      inputValues = Object.fromEntries(
+        Object.entries(block.inputs).map(([k, v]) => {
+          return [k, v.default || getDefault(v.is)];
+        })
+      );
+    }
+    function getDefault(type) {
+      console.log({ type });
+      if (type) {
+        switch (type) {
+          case "string":
+            return "";
+          case "object":
+            return {};
+          case "number":
+            return 0;
+          default:
+            return null;
+        }
+      } else {
+        return null;
+      }
+    }
+    let out = {
+      id: Math.random().toString(36).slice(2),
+      ...block,
+      select: block.type,
+      inputValues,
+    };
+    console.log(out);
+    return out;
   }
   function switchType(id, type) {
     let idx = blocks.findIndex((i) => i.id === id);
     if (idx < 0) {
       return;
     }
-    blocks[idx] = { id, ...BLOCKLIST.find((i) => i.type === type) };
+    blocks[idx] = _block({ id, ...BLOCKLIST.find((i) => i.type === type) });
   }
 </script>
 
@@ -120,8 +182,8 @@
       {block.type}
     </div>
     <select
-      bind:value={SELECTS[block.id]}
-      on:change={() => switchType(block.id, SELECTS[block.id])}
+      bind:value={block.select}
+      on:change={() => switchType(block.id, block.select)}
     >
       {#each BLOCKLIST.map((i) => i.type) as type}
         <option value={type}>
@@ -130,12 +192,32 @@
       {/each}
     </select>
     {#each Object.entries(block.inputs || {}) as [id, input]}
-      {input.label}
-      <input type="text" bind:value={INPUTS[block.id + "|" + id]} />
+      <label for={`${block.id}_input`}>{input.label}</label>
+      {#if input.type === "textarea"}
+        <textarea
+          id={`${block.id}_input`}
+          bind:value={block.inputValues[id]}
+          use:autosize
+        />
+      {:else if input.type === "code"}
+        <CodeEditor id={`${block.id}_input`} code={block.inputValues[id]} />
+      {:else if input.type === "select"}
+        <select id={`${block.id}_input`} bind:value={block.inputValues[id]}>
+          {#each input.choices || input.options as opt}
+            <option value={opt.value || opt}>{opt.label || opt}</option>
+          {/each}
+        </select>
+      {:else}
+        <input
+          type="text"
+          id={`${block.id}_input`}
+          bind:value={block.inputValues[id]}
+        />
+      {/if}
     {/each}
   {/each}
   <button id="addBlock" on:click={addBlock}>Add block</button>
-  <textarea readonly>{code}</textarea>
+  <CodeEditor readonly {code} />
 </main>
 
 <style lang="less">
@@ -160,7 +242,6 @@
     flex-direction: column;
   }
   textarea {
-    min-height: 400px;
     font-family: "Courier New", Courier, monospace;
   }
   main {
