@@ -5,7 +5,8 @@
   let code = "";
   import babel from "prettier/parser-babel";
   import prettier from "prettier";
-
+  // TODO: Wait until + triggers
+  // TODO: Edit code of blocks -> Convert them to code blocks then edit the code
   function format(code) {
     return prettier.format(code, {
       parser: "babel",
