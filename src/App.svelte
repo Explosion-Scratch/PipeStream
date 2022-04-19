@@ -155,7 +155,7 @@
       return `//No blocks added`;
     }
     let output = `// This variable stores the context of the code as it runs, the setContext function changes it after every step.\nlet CONTEXT = {}\n`;
-    if (blocks.find((i) => i.requires?.length)) {
+    if (blocks.find((i) => i?.requires?.length)) {
       output += `
 		// To install the needed npm modules for this project run:
 		// npm install ${blocks
@@ -172,7 +172,9 @@
         fn = `await (async () => {
 				 ${code}
 			 })()`;
-      } else if (!code.includes("return")) {
+      } else if (
+        !(code.includes("return") || code.includes("//") || code.includes("="))
+      ) {
         fn = code;
       } else {
         fn = `(() => {\n${code}\n})()`;
@@ -214,7 +216,7 @@
     }
     let out = {
       id: Math.random().toString(36).slice(2),
-      readableId: `step_${blocks.length}`,
+      readableId: `step_${blocks.length + 1}`,
       ...block,
       select: block.type,
       inputValues,
@@ -231,6 +233,38 @@
       readableId: blocks[idx].readableId,
       ...BLOCKLIST.find((i) => i.type === type),
     });
+  }
+  function moveBlock(id, amt) {
+    if (typeof amt === "string") {
+      switch (amt) {
+        case "up":
+          amt = -1;
+          break;
+        case "down":
+          amt = 1;
+          break;
+        default:
+          throw new Error(`${amt} not valid to move block ${id}`);
+      }
+    }
+    let idx = blocks.findIndex((i) => i.id === id);
+    if (idx < 0) {
+      throw new Error("Couldn't find block to move (this should never happen)");
+    }
+    if (idx + amt < 0 || idx + amt > blocks.length - 1) {
+      return console.log("Can't move block ", amt);
+    }
+    blocks = [...array_move(blocks, idx, amt)];
+    function array_move(arr, old_index, new_index) {
+      if (new_index >= arr.length) {
+        var k = new_index - arr.length + 1;
+        while (k--) {
+          arr.push(undefined);
+        }
+      }
+      arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+      return arr; // for testing
+    }
   }
 </script>
 
@@ -252,17 +286,55 @@
             placeholder="ID"
           /></label
         >
-        <select
-          id="blockTypeSelect"
-          bind:value={block.select}
-          on:change={() => switchType(block.id, block.select)}
-        >
-          {#each BLOCKLIST.map((i) => i.type) as type}
-            <option value={type}>
-              {type[0].toUpperCase()}{type.slice(1)}
-            </option>
-          {/each}
-        </select>
+        <div class="right">
+          <div class="moveButtons">
+            <button id="moveUp" on:click={() => moveBlock(block.id, "up")}
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                aria-hidden="true"
+                role="img"
+                class="iconify iconify--ph"
+                width="32"
+                height="32"
+                preserveAspectRatio="xMidYMid meet"
+                viewBox="0 0 256 256"
+                ><path
+                  fill="currentColor"
+                  d="M204.2 116.2a5.8 5.8 0 0 1-8.4 0L134 54.5V216a6 6 0 0 1-12 0V54.5l-61.8 61.7a5.9 5.9 0 0 1-8.4-8.4l72-72a5.8 5.8 0 0 1 8.4 0l72 72a5.8 5.8 0 0 1 0 8.4Z"
+                /></svg
+              ></button
+            >
+            <button id="moveDown" on:click={() => moveBlock(block.id, "down")}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                aria-hidden="true"
+                role="img"
+                class="iconify iconify--ph"
+                width="32"
+                height="32"
+                preserveAspectRatio="xMidYMid meet"
+                viewBox="0 0 256 256"
+                ><path
+                  fill="currentColor"
+                  d="m204.2 148.2l-72 72a5.8 5.8 0 0 1-8.4 0l-72-72a5.9 5.9 0 0 1 8.4-8.4l61.8 61.7V40a6 6 0 0 1 12 0v161.5l61.8-61.7a5.9 5.9 0 0 1 8.4 8.4Z"
+                /></svg
+              >
+            </button>
+          </div>
+          <select
+            id="blockTypeSelect"
+            bind:value={block.select}
+            on:change={() => switchType(block.id, block.select)}
+          >
+            {#each BLOCKLIST.map((i) => i.type) as type}
+              <option value={type}>
+                {type[0].toUpperCase()}{type.slice(1)}
+              </option>
+            {/each}
+          </select>
+        </div>
       </div>
       <div class="blockContent">
         {#if !block.inputs || !Object.entries(block.inputs).length}
@@ -326,6 +398,7 @@
   @text: #333;
 
   @import "utilities.less";
+  @import "main.less";
   :global(html) {
     font-size: 0.8rem;
   }
@@ -351,80 +424,8 @@
     text-align: center;
     font-style: italic;
   }
-  button {
+  #addBlock {
     margin-top: 1.5rem;
     .button(@secondary);
-  }
-  // From less style editor I made
-
-  html {
-    padding: 50px 0;
-    height: fit-content;
-    min-height: 100vh;
-  }
-  .block {
-    padding: 20px;
-    margin: 10px 0;
-    box-shadow: 3px 3px 10px #0001;
-    border: 0.15rem dashed #0001;
-    border-radius: 10px;
-    select {
-      background: #0001;
-    }
-    .group {
-      display: flex;
-      align-items: center;
-      position: relative;
-      #blockLabel {
-        font-style: italic;
-        font-size: 1.1rem;
-        opacity: 0.7;
-      }
-      label {
-        display: flex;
-        align-items: center;
-        margin-left: 1rem;
-        opacity: 0.5;
-        &:hover,
-        &:focus,
-        &:focus-within {
-          opacity: 1;
-        }
-        input {
-          height: 100%;
-          margin: 0;
-          margin-left: 0.2rem;
-          width: 5rem;
-        }
-      }
-      padding-bottom: 1rem;
-      margin-bottom: 1rem;
-      border-bottom: 0.15rem dashed #0001;
-      #blockTypeSelect {
-        width: 15%;
-        position: absolute;
-        right: 0.2rem;
-      }
-    }
-    #noInputs {
-      font-size: 1.2rem;
-      font-style: italic;
-      opacity: 0.4;
-    }
-    .blockContent {
-      label,
-      select,
-      input,
-      [id*="code_editor"] {
-        margin: 0.2rem 0.5rem;
-        width: 100%;
-        box-sizing: border-box;
-      }
-      label {
-        margin-top: 20px;
-        font-size: 1.1rem;
-        opacity: 0.6;
-      }
-    }
   }
 </style>
