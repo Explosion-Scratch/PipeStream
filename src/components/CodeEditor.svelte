@@ -1,4 +1,5 @@
 <script>
+  import lzString from "lz-string"
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let code = "";
@@ -47,7 +48,6 @@
   }
 
   function fire(el, name, detail) {
-    console.log(detail);
     dispatch("codeUpdate", { detail, target: el });
   }
 </script>

@@ -1,5 +1,7 @@
 <script>
   import CodeEditor from "./components/CodeEditor.svelte";
+  import lz from "lz-string";
+  import RK from "./components/RunKit.svelte";
   import autosize from "./helpers/autosize";
   let blocks = [];
   let code = "";
@@ -13,11 +15,18 @@
       plugins: [babel],
     });
   }
-  function getObject(key) {
-    if (/^[a-z_][a-z0-9_]+$/i.test(key)) {
-      return `.${key}`;
+  function getObject(path) {
+    if (path.includes(".")) {
+      return path.split(".").map(a).join("");
     } else {
-      return `[${JSON.stringify(key)}]`;
+      return a(path);
+    }
+    function a(key) {
+      if (/^[a-z_][a-z0-9_]+$/i.test(key)) {
+        return `.${key}`;
+      } else {
+        return `[${JSON.stringify(key)}]`;
+      }
     }
   }
   function validateJSON(json) {
@@ -30,6 +39,23 @@
   }
   import { onMount } from "svelte";
   onMount(async () => {
+    if (location.hash) {
+      blocks = JSON.parse(
+        lz.decompressFromEncodedURIComponent(location.hash.slice(1))
+      ).map((b) => {
+        return _block(b);
+      });
+      code = await getCode();
+    } else {
+      if (localStorage.blocks && validateJSON(localStorage.blocks)) {
+        blocks = JSON.parse(localStorage.blocks).map((b) => {
+          return _block(b);
+        });
+        code = await getCode();
+      } else {
+        localStorage.clear(); // Blocks could be invalid
+      }
+    }
     setInterval(async () => {
       code = await getCode();
     }, 10);
@@ -67,6 +93,7 @@
           url
         )}${opts}).then(response => response.${output}())`;
       },
+      requires: ["isomorphic-fetch"],
       inputs: {
         url: {
           label: "URL to fetch",
@@ -120,11 +147,34 @@
         },
       },
       code: ({ text, to }) => {
-        return `const translate = require("google-translate-api"); let translated = await translate(${safe(
-          text
-        )}, {to: ${safe(to)}});\nreturn translated`;
+        return `\nreturn await translate(${safe(text)}, ${safe(
+          to
+        )});\nasync function translate(text, target, source, proxy = "") {
+          if (typeof text == "object") {
+            target = text.target;
+            source = text.source;
+            proxy = text.proxy;
+            text = text.text;
+          }
+          var opts = {
+            text: text || "",
+            source: source || 'auto',
+            target: target || "en",
+            proxy: proxy || "",
+          }
+          var result = await fetch(
+            \`https://\${opts.proxy}translate.googleapis.com/translate_a/single?client=gtx&sl=\${opts.source}&tl=\${opts.target}&dt=t&q=\${encodeURI(opts.text)}\`
+          ).then(res => res.json());
+          return {
+            source: opts.source,
+            target: opts.target,
+            original: text,
+            translated: result[0][0][0],
+            result,
+          };
+        }`;
       },
-      requires: ["google-translate-api"],
+      requires: ["isomorphic-fetch"],
     },
     {
       type: "log",
@@ -152,6 +202,8 @@
     );
   }
   async function getCode() {
+    localStorage.setItem("blocks", JSON.stringify(blocks));
+    location.hash = lz.compressToEncodedURIComponent(JSON.stringify(blocks));
     if (!blocks.length) {
       return `//No blocks added`;
     }
@@ -159,10 +211,15 @@
     if (blocks.find((i) => i?.requires?.length)) {
       output += `
 		// To install the needed npm modules for this project run:
-		// npm install ${blocks
-      .map((i) => i.requires)
-      .flat()
-      .join(" ")}
+		// npm install ${unique(blocks.map((i) => i.requires).flat()).join(" ")}
+      ${
+        blocks
+          .map((i) => i.requires)
+          .flat()
+          .includes("isomorphic-fetch")
+          ? `require("isomorphic-fetch");\n`
+          : ""
+      }
 		`;
     }
     for (let i in blocks) {
@@ -173,16 +230,16 @@
         fn = `await (async () => {
 				 ${code}
 			 })()`;
-      } else if (
-        !(code.includes("return") || code.includes("//") || code.includes("="))
-      ) {
+        fn = `CONTEXT${getObject(block.readableId)} = ${fn}`;
+      } else if (!code.includes("return")) {
         fn = code;
       } else {
         fn = `(() => {\n${code}\n})()`;
+        fn = `CONTEXT${getObject(block.readableId)} = ${fn}`;
       }
       output += `
 			// Step ${parseInt(i) + 1} of ${blocks.length}: ${block.type}
-		 	CONTEXT${getObject(block.readableId)} = ${fn}\n\n
+		 	${fn}\n\n
 		  `;
     }
     return format(output);
@@ -195,7 +252,7 @@
     if (block.inputs && Object.values(block.inputs).length) {
       inputValues = Object.fromEntries(
         Object.entries(block.inputs).map(([k, v]) => {
-          return [k, v.default || getDefault(v.is)];
+          return [k, block?.inputValues?.[k] || v.default || getDefault(v.is)];
         })
       );
     }
@@ -218,6 +275,7 @@
     let out = {
       id: Math.random().toString(36).slice(2),
       readableId: `step_${blocks.length + 1}`,
+      ...BLOCKLIST.find((i) => i.type === block.type),
       ...block,
       select: block.type,
       inputValues,
@@ -277,6 +335,9 @@
       arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
       return arr; // for testing
     }
+  }
+  function unique(array) {
+    return [...new Set(array)];
   }
 </script>
 
@@ -412,7 +473,7 @@
     </div>
   {/each}
   <button id="addBlock" on:click={addBlock}>Add block</button>
-  <CodeEditor readonly {code} />
+  <RK {code} />
 </main>
 
 <style lang="less">

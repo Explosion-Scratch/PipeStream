@@ -6,6 +6,7 @@ specifiers:
   '@rollup/plugin-node-resolve': ^11.0.0
   codejar: ^3.6.0
   less: ^4.1.2
+  lz-string: ^1.4.4
   prettier: ^2.6.2
   prettier-format: ^3.1.0
   prismjs: ^1.28.0
@@ -28,6 +29,7 @@ devDependencies:
   '@rollup/plugin-node-resolve': 11.2.1_rollup@2.70.2
   codejar: 3.6.0
   less: 4.1.2
+  lz-string: 1.4.4
   prettier: 2.6.2
   prismjs: 1.28.0
   rollup: 2.70.2
@@ -494,6 +496,11 @@ packages:
     resolution: {integrity: sha512-XfegD5pyTAfb+GY6chk283Ox5z8WexG56OvM06RWLpAc/UHozO8X6xAxEkIitZOtsSMM1Yr3DkHgW5W+onLhCw==}
     engines: {node: '>=6'}
     dev: false
+
+  /lz-string/1.4.4:
+    resolution: {integrity: sha1-wNjq82BZ9wV5bh40SBHPTEmNOiY=}
+    hasBin: true
+    dev: true
 
   /magic-string/0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
