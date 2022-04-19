@@ -42,7 +42,7 @@
           type: "code",
           is: "string",
           default:
-            "//Use the 'CONTEXT' variable to get the output of various steps. Write to it to save something\n//Also, it's optionally async, if you put \"await anywhere in your code\"",
+            "//Use the 'CONTEXT' variable to get the output of various steps. Write to it to save something\n//Also, it's optionally async, if you put \"await\" anywhere in your code",
         },
       },
       code: ({ code }) => code,
@@ -121,7 +121,7 @@
       code: ({ text, to }) => {
         return `const translate = require("google-translate-api"); let translated = await translate(${safe(
           text
-        )}, {to: ${safe(to)}});\nreturn {translated: translated}`;
+        )}, {to: ${safe(to)}});\nreturn translated`;
       },
       requires: ["google-translate-api"],
     },
@@ -154,7 +154,7 @@
     if (!blocks.length) {
       return `//No blocks added`;
     }
-    let output = `// This variable stores the context of the code as it runs, the setContext function changes it after every step.\nlet CONTEXT = {}\n`;
+    let output = `// This variable stores the context of the code as it runs.\nlet CONTEXT = {}\n`;
     if (blocks.find((i) => i?.requires?.length)) {
       output += `
 		// To install the needed npm modules for this project run:
@@ -233,6 +233,17 @@
       readableId: blocks[idx].readableId,
       ...BLOCKLIST.find((i) => i.type === type),
     });
+  }
+  function deleteBlock(id) {
+    if (!confirm("Are you sure you want to delete this block?")) {
+      return;
+    }
+    let idx = blocks.findIndex((i) => i.id === id);
+    if (idx < 0) {
+      return console.log("Block not found [delete]");
+    }
+    blocks.splice(idx, 1);
+    blocks = [...blocks];
   }
   function moveBlock(id, amt) {
     if (typeof amt === "string") {
@@ -319,6 +330,23 @@
                 ><path
                   fill="currentColor"
                   d="m204.2 148.2l-72 72a5.8 5.8 0 0 1-8.4 0l-72-72a5.9 5.9 0 0 1 8.4-8.4l61.8 61.7V40a6 6 0 0 1 12 0v161.5l61.8-61.7a5.9 5.9 0 0 1 8.4 8.4Z"
+                /></svg
+              >
+            </button>
+            <button id="delete" on:click={() => deleteBlock(block.id)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                aria-hidden="true"
+                role="img"
+                class="iconify iconify--ph"
+                width="32"
+                height="32"
+                preserveAspectRatio="xMidYMid meet"
+                viewBox="0 0 256 256"
+                ><path
+                  fill="currentColor"
+                  d="M216 50h-42V40a22.1 22.1 0 0 0-22-22h-48a22.1 22.1 0 0 0-22 22v10H40a6 6 0 0 0 0 12h10v146a14 14 0 0 0 14 14h128a14 14 0 0 0 14-14V62h10a6 6 0 0 0 0-12ZM94 40a10 10 0 0 1 10-10h48a10 10 0 0 1 10 10v10H94Zm100 168a2 2 0 0 1-2 2H64a2 2 0 0 1-2-2V62h132Zm-84-104v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Zm48 0v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Z"
                 /></svg
               >
             </button>
