@@ -1,6 +1,11 @@
+<script context="module">
+  import SEO from "./components/SEO.svelte";
+</script>
+
 <script>
   import CodeEditor from "./components/CodeEditor.svelte";
   import lz from "lz-string";
+  import hoverfocus from "./helpers/hoverfocus.js";
   import RK from "./components/RunKit.svelte";
   import autosize from "./helpers/autosize";
   let blocks = [];
@@ -318,13 +323,15 @@
       }
     }
     let idx = blocks.findIndex((i) => i.id === id);
+    console.log(`Moving block %o (blocks[%o]) %o spots`, id, idx, amt);
     if (idx < 0) {
       throw new Error("Couldn't find block to move (this should never happen)");
     }
-    if (idx + amt < 0 || idx + amt > blocks.length - 1) {
-      return console.log("Can't move block ", amt);
+    if (idx + amt < 0 || idx + amt >= blocks.length) {
+      console.log("Can't move block ", amt);
+      return;
     }
-    blocks = [...array_move(blocks, idx, amt)];
+    blocks = [...array_move(blocks, idx, idx + amt)];
     function array_move(arr, old_index, new_index) {
       if (new_index >= arr.length) {
         var k = new_index - arr.length + 1;
@@ -341,6 +348,12 @@
   }
 </script>
 
+<SEO
+  title="PipeStream"
+  description="Generate readable JavaScript code with a PipeDream like interface"
+  color="#00bbbb"
+/>
+
 <main>
   {#if !blocks.length}
     <div id="noBlocks">No blocks yet, click the "+" button to add one!</div>
@@ -354,6 +367,7 @@
         </div>
         <label
           >ID: <input
+            use:hoverfocus
             type="text"
             bind:value={block.readableId}
             placeholder="ID"
@@ -414,12 +428,13 @@
             </button>
           </div>
           <select
+            use:hoverfocus
             id="blockTypeSelect"
             bind:value={block.select}
             on:change={() => switchType(block.id, block.select)}
           >
             {#each BLOCKLIST.map((i) => i.type) as type}
-              <option value={type}>
+              <option value={type} selected={block.select === type}>
                 {type[0].toUpperCase()}{type.slice(1)}
               </option>
             {/each}
@@ -438,6 +453,7 @@
           >
           {#if input.type === "textarea"}
             <textarea
+              use:hoverfocus
               id={`${block.id}_input`}
               bind:value={block.inputValues[id]}
               use:autosize
@@ -451,18 +467,27 @@
               )}
             />
           {:else if input.type === "select"}
-            <select id={`${block.id}_input`} bind:value={block.inputValues[id]}>
+            <select
+              use:hoverfocus
+              id={`${block.id}_input`}
+              bind:value={block.inputValues[id]}
+            >
               {#each input.choices || input.options as opt}
                 <option
                   value={opt.value || opt}
                   selected={[opt.label, opt, opt.value]
                     .filter(Boolean)
-                    .includes(input.default)}>{opt.label || opt}</option
+                    .includes(input.default) ||
+                    [opt.label, opt, opt.value]
+                      .filter(Boolean)
+                      .includes(block.inputValues[id])}
+                  >{opt.label || opt}</option
                 >
               {/each}
             </select>
           {:else}
             <input
+              use:hoverfocus
               type="text"
               id={`${block.id}_input`}
               bind:value={block.inputValues[id]}
@@ -477,9 +502,9 @@
 </main>
 
 <style lang="less">
-  @color: #315c7b;
-  @secondary: #49979a;
-  @secondary_bright: #84b7b4;
+  @color: #d04f1c;
+  @secondary: #f05d23;
+  @secondary_bright: #f27e50;
   @background: #fefefe;
   @tertiary: #c15154;
   @radius_md: 5px;

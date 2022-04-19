@@ -4,6 +4,17 @@
   min-height: 100vh;
 }
 .block {
+  label,
+  select,
+  input,
+  [id*="code_editor"],
+  textarea {
+    box-sizing: border-box;
+    &:focus {
+      box-shadow: 0 0 0 2px fade(@secondary_bright, 10%);
+      outline: none;
+    }
+  }
   padding: 20px;
   margin: 10px 0;
   box-shadow: 3px 3px 10px #0001;
@@ -73,10 +84,15 @@
     label,
     select,
     input,
-    [id*="code_editor"] {
+    [id*="code_editor"],
+    textarea {
       margin: 0.2rem 0.5rem;
       width: 100%;
       box-sizing: border-box;
+    }
+    textarea {
+      border: 0.1rem dashed #0002;
+      min-height: 5rem;
     }
     label {
       margin-top: 20px;
