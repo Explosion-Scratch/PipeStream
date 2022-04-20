@@ -3,6 +3,8 @@
 </script>
 
 <script>
+  let page = "generate";
+
   import CodeEditor from "./components/CodeEditor.svelte";
   import lz from "lz-string";
   import hoverfocus from "./helpers/hoverfocus.js";
@@ -353,153 +355,205 @@
   description="Generate readable JavaScript code with a PipeDream like interface"
   color="#00bbbb"
 />
-
-<main>
-  {#if !blocks.length}
-    <div id="noBlocks">No blocks yet, click the "+" button to add one!</div>
+<div id="buttons">
+  {#if page === "generate"}
+    <button on:click={() => (page = "code")}
+      ><svg
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        aria-hidden="true"
+        role="img"
+        class="iconify iconify--ph"
+        width="32"
+        height="32"
+        preserveAspectRatio="xMidYMid meet"
+        viewBox="0 0 256 256"
+        ><path
+          fill="currentColor"
+          d="M67.8 92.6L25.4 128l42.4 35.4a5.9 5.9 0 0 1 .8 8.4A5.8 5.8 0 0 1 64 174a5.9 5.9 0 0 1-3.8-1.4l-48-40a5.9 5.9 0 0 1 0-9.2l48-40a6 6 0 0 1 7.6 9.2Zm176 30.8l-48-40a6 6 0 0 0-7.6 9.2l42.4 35.4l-42.4 35.4a5.9 5.9 0 0 0-.8 8.4a5.8 5.8 0 0 0 4.6 2.2a5.9 5.9 0 0 0 3.8-1.4l48-40a5.9 5.9 0 0 0 0-9.2Zm-81.7-89a5.9 5.9 0 0 0-7.7 3.5l-64 176a5.9 5.9 0 0 0 3.6 7.7a4.5 4.5 0 0 0 2 .4a5.8 5.8 0 0 0 5.6-3.9l64-176a5.9 5.9 0 0 0-3.5-7.7Z"
+        /></svg
+      ></button
+    >
+  {:else if page === "code"}
+    <button on:click={() => (page = "generate")}
+      ><svg
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        aria-hidden="true"
+        role="img"
+        class="iconify iconify--ph"
+        width="32"
+        height="32"
+        preserveAspectRatio="xMidYMid meet"
+        viewBox="0 0 256 256"
+        ><path
+          fill="currentColor"
+          d="M160 214a5.8 5.8 0 0 1-4.2-1.8l-80-80a5.8 5.8 0 0 1 0-8.4l80-80a5.9 5.9 0 0 1 8.4 8.4L88.5 128l75.7 75.8A6 6 0 0 1 160 214Z"
+        /></svg
+      ></button
+    >
   {/if}
-  {#each blocks as block}
-    <div class="block">
-      <div class="group">
-        <div id="blockLabel">
-          Step {blocks.findIndex((i) => i.id === block.id) + 1} of {blocks.length}:
-          {block.type}
-        </div>
-        <label
-          >ID: <input
-            use:hoverfocus
-            type="text"
-            bind:value={block.readableId}
-            placeholder="ID"
-          /></label
-        >
-        <div class="right">
-          <div class="moveButtons">
-            <button id="moveUp" on:click={() => moveBlock(block.id, "up")}
-              ><svg
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                aria-hidden="true"
-                role="img"
-                class="iconify iconify--ph"
-                width="32"
-                height="32"
-                preserveAspectRatio="xMidYMid meet"
-                viewBox="0 0 256 256"
-                ><path
-                  fill="currentColor"
-                  d="M204.2 116.2a5.8 5.8 0 0 1-8.4 0L134 54.5V216a6 6 0 0 1-12 0V54.5l-61.8 61.7a5.9 5.9 0 0 1-8.4-8.4l72-72a5.8 5.8 0 0 1 8.4 0l72 72a5.8 5.8 0 0 1 0 8.4Z"
-                /></svg
-              ></button
-            >
-            <button id="moveDown" on:click={() => moveBlock(block.id, "down")}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                aria-hidden="true"
-                role="img"
-                class="iconify iconify--ph"
-                width="32"
-                height="32"
-                preserveAspectRatio="xMidYMid meet"
-                viewBox="0 0 256 256"
-                ><path
-                  fill="currentColor"
-                  d="m204.2 148.2l-72 72a5.8 5.8 0 0 1-8.4 0l-72-72a5.9 5.9 0 0 1 8.4-8.4l61.8 61.7V40a6 6 0 0 1 12 0v161.5l61.8-61.7a5.9 5.9 0 0 1 8.4 8.4Z"
-                /></svg
-              >
-            </button>
-            <button id="delete" on:click={() => deleteBlock(block.id)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                aria-hidden="true"
-                role="img"
-                class="iconify iconify--ph"
-                width="32"
-                height="32"
-                preserveAspectRatio="xMidYMid meet"
-                viewBox="0 0 256 256"
-                ><path
-                  fill="currentColor"
-                  d="M216 50h-42V40a22.1 22.1 0 0 0-22-22h-48a22.1 22.1 0 0 0-22 22v10H40a6 6 0 0 0 0 12h10v146a14 14 0 0 0 14 14h128a14 14 0 0 0 14-14V62h10a6 6 0 0 0 0-12ZM94 40a10 10 0 0 1 10-10h48a10 10 0 0 1 10 10v10H94Zm100 168a2 2 0 0 1-2 2H64a2 2 0 0 1-2-2V62h132Zm-84-104v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Zm48 0v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Z"
-                /></svg
-              >
-            </button>
+</div>
+{#if page === "generate"}
+  <main>
+    {#if !blocks.length}
+      <div id="noBlocks">No blocks yet, click the "+" button to add one!</div>
+    {/if}
+    {#each blocks as block}
+      <div class="block">
+        <div class="group">
+          <div id="blockLabel">
+            Step {blocks.findIndex((i) => i.id === block.id) + 1} of {blocks.length}:
+            {block.type}
           </div>
-          <select
-            use:hoverfocus
-            id="blockTypeSelect"
-            bind:value={block.select}
-            on:change={() => switchType(block.id, block.select)}
-          >
-            {#each BLOCKLIST.map((i) => i.type) as type}
-              <option value={type} selected={block.select === type}>
-                {type[0].toUpperCase()}{type.slice(1)}
-              </option>
-            {/each}
-          </select>
-        </div>
-      </div>
-      <div class="blockContent">
-        {#if !block.inputs || !Object.entries(block.inputs).length}
-          <span id="noInputs">This block doesn't have any inputs</span>
-        {/if}
-        {#each Object.entries(block.inputs || {}) as [id, input]}
-          <label for={`${block.id}_input`}
-            >{input.label
-              ? input.label
-              : `${id[0].toUpperCase()}${id.slice(1)}`}</label
-          >
-          {#if input.type === "textarea"}
-            <textarea
-              use:hoverfocus
-              id={`${block.id}_input`}
-              bind:value={block.inputValues[id]}
-              use:autosize
-            />
-          {:else if input.type === "code"}
-            <CodeEditor
-              id={`${block.id}_input`}
-              code={block.inputValues[id]}
-              on:codeUpdate={({ detail: code }) => (
-                (block.inputValues[id] = code.detail), code.detail
-              )}
-            />
-          {:else if input.type === "select"}
-            <select
-              use:hoverfocus
-              id={`${block.id}_input`}
-              bind:value={block.inputValues[id]}
-            >
-              {#each input.choices || input.options as opt}
-                <option
-                  value={opt.value || opt}
-                  selected={[opt.label, opt, opt.value]
-                    .filter(Boolean)
-                    .includes(input.default) ||
-                    [opt.label, opt, opt.value]
-                      .filter(Boolean)
-                      .includes(block.inputValues[id])}
-                  >{opt.label || opt}</option
-                >
-              {/each}
-            </select>
-          {:else}
-            <input
+          <label
+            >ID: <input
               use:hoverfocus
               type="text"
-              id={`${block.id}_input`}
-              bind:value={block.inputValues[id]}
-            />
+              bind:value={block.readableId}
+              placeholder="ID"
+            /></label
+          >
+          <div class="right">
+            <div class="moveButtons">
+              <button id="moveUp" on:click={() => moveBlock(block.id, "up")}
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  aria-hidden="true"
+                  role="img"
+                  class="iconify iconify--ph"
+                  width="32"
+                  height="32"
+                  preserveAspectRatio="xMidYMid meet"
+                  viewBox="0 0 256 256"
+                  ><path
+                    fill="currentColor"
+                    d="M204.2 116.2a5.8 5.8 0 0 1-8.4 0L134 54.5V216a6 6 0 0 1-12 0V54.5l-61.8 61.7a5.9 5.9 0 0 1-8.4-8.4l72-72a5.8 5.8 0 0 1 8.4 0l72 72a5.8 5.8 0 0 1 0 8.4Z"
+                  /></svg
+                ></button
+              >
+              <button
+                id="moveDown"
+                on:click={() => moveBlock(block.id, "down")}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  aria-hidden="true"
+                  role="img"
+                  class="iconify iconify--ph"
+                  width="32"
+                  height="32"
+                  preserveAspectRatio="xMidYMid meet"
+                  viewBox="0 0 256 256"
+                  ><path
+                    fill="currentColor"
+                    d="m204.2 148.2l-72 72a5.8 5.8 0 0 1-8.4 0l-72-72a5.9 5.9 0 0 1 8.4-8.4l61.8 61.7V40a6 6 0 0 1 12 0v161.5l61.8-61.7a5.9 5.9 0 0 1 8.4 8.4Z"
+                  /></svg
+                >
+              </button>
+              <button id="delete" on:click={() => deleteBlock(block.id)}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  aria-hidden="true"
+                  role="img"
+                  class="iconify iconify--ph"
+                  width="32"
+                  height="32"
+                  preserveAspectRatio="xMidYMid meet"
+                  viewBox="0 0 256 256"
+                  ><path
+                    fill="currentColor"
+                    d="M216 50h-42V40a22.1 22.1 0 0 0-22-22h-48a22.1 22.1 0 0 0-22 22v10H40a6 6 0 0 0 0 12h10v146a14 14 0 0 0 14 14h128a14 14 0 0 0 14-14V62h10a6 6 0 0 0 0-12ZM94 40a10 10 0 0 1 10-10h48a10 10 0 0 1 10 10v10H94Zm100 168a2 2 0 0 1-2 2H64a2 2 0 0 1-2-2V62h132Zm-84-104v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Zm48 0v64a6 6 0 0 1-12 0v-64a6 6 0 0 1 12 0Z"
+                  /></svg
+                >
+              </button>
+            </div>
+            <select
+              use:hoverfocus
+              id="blockTypeSelect"
+              bind:value={block.select}
+              on:change={() => switchType(block.id, block.select)}
+            >
+              {#each BLOCKLIST.map((i) => i.type) as type}
+                <option value={type} selected={block.select === type}>
+                  {type[0].toUpperCase()}{type.slice(1)}
+                </option>
+              {/each}
+            </select>
+          </div>
+        </div>
+        <div class="blockContent">
+          {#if !block.inputs || !Object.entries(block.inputs).length}
+            <span id="noInputs">This block doesn't have any inputs</span>
           {/if}
-        {/each}
+          {#each Object.entries(block.inputs || {}) as [id, input]}
+            <label for={`${block.id}_input`}
+              >{input.label
+                ? input.label
+                : `${id[0].toUpperCase()}${id.slice(1)}`}</label
+            >
+            {#if input.type === "textarea"}
+              <textarea
+                use:hoverfocus
+                id={`${block.id}_input`}
+                bind:value={block.inputValues[id]}
+                use:autosize
+              />
+            {:else if input.type === "code"}
+              <CodeEditor
+                id={`${block.id}_input`}
+                code={block.inputValues[id]}
+                on:codeUpdate={({ detail: code }) => (
+                  (block.inputValues[id] = code.detail), code.detail
+                )}
+              />
+            {:else if input.type === "select"}
+              <select
+                use:hoverfocus
+                id={`${block.id}_input`}
+                bind:value={block.inputValues[id]}
+              >
+                {#each input.choices || input.options as opt}
+                  <option
+                    value={opt.value || opt}
+                    selected={[opt.label, opt, opt.value]
+                      .filter(Boolean)
+                      .includes(input.default) ||
+                      [opt.label, opt, opt.value]
+                        .filter(Boolean)
+                        .includes(block.inputValues[id])}
+                    >{opt.label || opt}</option
+                  >
+                {/each}
+              </select>
+            {:else}
+              <input
+                use:hoverfocus
+                type="text"
+                id={`${block.id}_input`}
+                bind:value={block.inputValues[id]}
+              />
+            {/if}
+          {/each}
+        </div>
       </div>
-    </div>
-  {/each}
-  <button id="addBlock" on:click={addBlock}>Add block</button>
+    {/each}
+    <button id="addBlock" on:click={addBlock}>Add block</button>
+    <button id="viewCode" on:click={() => (page = "code")}>View code</button>
+  </main>
+{:else if page === "code"}
+  <h2 class="codeTitle">Generated code:</h2>
+{/if}
+
+<div
+  class="wrapper"
+  style={page === "code" ? `display: block;` : `display: none;`}
+>
   <RK {code} />
-</main>
+</div>
 
 <style lang="less">
   @color: #d04f1c;
@@ -542,5 +596,9 @@
   #addBlock {
     margin-top: 1.5rem;
     .button(@secondary);
+  }
+  #viewCode {
+    color: darken(@tertiary, 20);
+    .button(@tertiary);
   }
 </style>

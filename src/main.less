@@ -101,3 +101,36 @@
     }
   }
 }
+
+#buttons {
+  position: fixed;
+  top: 0;
+  right: 0;
+  margin: 10px;
+
+  button {
+    padding: 0;
+    margin: 0;
+    border: 1px solid transparent;
+    &:hover {
+      border: 1px solid #0001;
+    }
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.codeTitle {
+  font-size: 3rem;
+  text-align: center;
+  font-weight: 100;
+}
