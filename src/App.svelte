@@ -239,7 +239,7 @@
 			 })()`;
         fn = `CONTEXT${getObject(block.readableId)} = ${fn}`;
       } else if (!code.includes("return")) {
-        fn = code;
+        fn = `CONTEXT${getObject(block.readableId)} = ${code}`;
       } else {
         fn = `(() => {\n${code}\n})()`;
         fn = `CONTEXT${getObject(block.readableId)} = ${fn}`;
